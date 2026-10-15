@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  /* Figma logo palette: coral→orange gradient as the app accent */
+  --accent: #ff6b6b;
+  --accent-strong: #ff8e53;
+  --accent-cool: #38bdf8;
+  --accent-indigo: #818cf8;
+  --brand-bg-0: #0f172a;
+  --brand-bg-1: #1e293b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---------- touch / tablet tuning ---------- */
+/* Android tablets & iPads: bigger hit targets, no hover-only affordances,
+   and no 300ms tap delay or double-tap-zoom fighting the viewer. */
+@media (pointer: coarse) {
+  html,
+  body {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app-ui button,
+  #app-ui [role="tab"],
+  #app-ui select,
+  #app-ui input[type="number"],
+  #app-ui input[type="color"] {
+    min-height: 40px;
+    min-width: 40px; /* Material recommends ≥48dp; 40 is a workable balance for a dense toolbar */
+  }
+  #app-ui button {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  /* hover cues are useless on touch — expose edit targets statically */
+  .edit-mode .textLayer span {
+    box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35);
+  }
+  #app-ui .group-hover\:opacity-100 {
+    opacity: 1;
+  }
+}
+
+/* ---------- pdf.js text layer ---------- */
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+  user-select: text;
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+::selection {
+  background: rgba(56, 189, 248, 0.35);
+}
+
+/* search highlight layer: same coordinate space as the text layer */
+.highlightLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+.hl {
+  position: absolute;
+  background: rgba(56, 189, 248, 0.35);
+  border-radius: 1px;
+}
+.hl.hl-active {
+  background: rgba(255, 142, 83, 0.55);
+  outline: 1px solid rgba(255, 142, 83, 0.9);
+}
+
+.page-shadow {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- edit mode ---------- */
+.edit-mode .textLayer span {
+  cursor: pointer;
+}
+.edit-mode .textLayer {
+  user-select: none;
+}
+.edit-mode .textLayer span:hover {
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.6);
+  border-radius: 1px;
+}
+
+/* ---------- night mode: invert page content only ---------- */
+.night .page-canvas {
+  filter: invert(0.92) hue-rotate(180deg) contrast(0.92);
+}
+.night .page-shadow {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75);
+}
+
+/* ---------- scrollbars ---------- */
+.doc-scroll::-webkit-scrollbar,
+.sidebar-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.doc-scroll::-webkit-scrollbar-thumb,
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.doc-scroll::-webkit-scrollbar-track,
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* ---------- print ---------- */
+#print-root,
+.print-root {
+  display: none;
+}
+@media print {
+  #app-ui,
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .print-root {
+    display: block !important;
+  }
+  .print-root canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    page-break-after: always;
+    break-after: page;
+  }
+}

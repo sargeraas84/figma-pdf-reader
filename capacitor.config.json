@@ -1,0 +1,11 @@
+{
+  "appId": "com.figma.reader.web",
+  "appName": "Figma",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

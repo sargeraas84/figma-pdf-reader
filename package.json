@@ -1,0 +1,116 @@
+{
+  "name": "figma-reader",
+  "version": "1.1.0",
+  "description": "Figma — a full-featured desktop PDF reader built on Electron and pdf.js.",
+  "author": "Figma Reader",
+  "main": "electron/main.cjs",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n vite,electron -c cyan,magenta \"vite\" \"wait-on tcp:127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "dev:web": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "gen:icon": "node scripts/generate-icon.mjs",
+    "start": "electron .",
+    "test:e2e": "playwright test",
+    "test:save": "npm run build && esbuild scripts/smoke-fonts.mjs --bundle --platform=node --format=esm --outfile=output/smoke-fonts-test.mjs && node output/smoke-fonts-test.mjs",
+    "test:ci": "npm run test:save && npx playwright test",
+    "preview": "npm run build && electron .",
+    "build:web": "vite build",
+    "serve:web": "vite preview --host --port 4173",
+    "package": "npm run build && electron-builder",
+    "package:dir": "npm run build && electron-builder --dir",
+    "package:win": "npm run build && electron-builder --win",
+    "package:mac": "npm run build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@cantoo/pdf-lib": "^2.11.1",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/lato": "^0.4.1",
+    "@expo-google-fonts/merriweather": "^0.4.2",
+    "@expo-google-fonts/open-sans": "^0.4.2",
+    "@expo-google-fonts/oswald": "^0.4.2",
+    "@expo-google-fonts/roboto": "^0.4.3",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "docx": "^9.11.0",
+    "docx-preview": "^0.4.1",
+    "lucide-react": "^0.469.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38",
+    "pptxgenjs": "^4.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tesseract.js": "6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^33.2.0",
+    "electron-builder": "^26.0.0",
+    "jszip": "^3.10.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.figma.reader",
+    "productName": "Figma",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "resources/**"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/tessdata",
+        "to": "tessdata"
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+    },
+    "forceCodeSigning": false,
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+node_modules/
+output/
+release/
+.tooling/
+dist/
+android/app/build/
+android/.gradle/
+e2e-results/
+test-doc.docx
+test-fixture.pdf
+.tooling/bin
+/tmp
+*.log
+.DS_Store
+site/
+e2e/results/
+.vite/

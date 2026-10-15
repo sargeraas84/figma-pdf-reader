@@ -1,0 +1,72 @@
+[
+  {
+    "id": "roboto",
+    "label": "Roboto",
+    "familyName": "Roboto",
+    "italicSupported": true,
+    "files": {
+      "regular": "Roboto_regular.ttf",
+      "bold": "Roboto_bold.ttf",
+      "italic": "Roboto_italic.ttf",
+      "boldItalic": "Roboto_boldItalic.ttf"
+    }
+  },
+  {
+    "id": "open-sans",
+    "label": "Open Sans",
+    "familyName": "Open Sans",
+    "italicSupported": true,
+    "files": {
+      "regular": "OpenSans_regular.ttf",
+      "bold": "OpenSans_bold.ttf",
+      "italic": "OpenSans_italic.ttf",
+      "boldItalic": "OpenSans_boldItalic.ttf"
+    }
+  },
+  {
+    "id": "lato",
+    "label": "Lato",
+    "familyName": "Lato",
+    "italicSupported": true,
+    "files": {
+      "regular": "Lato_regular.ttf",
+      "bold": "Lato_bold.ttf",
+      "italic": "Lato_italic.ttf",
+      "boldItalic": "Lato_boldItalic.ttf"
+    }
+  },
+  {
+    "id": "inter",
+    "label": "Inter",
+    "familyName": "Inter",
+    "italicSupported": true,
+    "files": {
+      "regular": "Inter_regular.ttf",
+      "bold": "Inter_bold.ttf",
+      "italic": "Inter_italic.ttf",
+      "boldItalic": "Inter_boldItalic.ttf"
+    }
+  },
+  {
+    "id": "oswald",
+    "label": "Oswald",
+    "familyName": "Oswald",
+    "italicSupported": false,
+    "files": {
+      "regular": "Oswald_regular.ttf",
+      "bold": "Oswald_bold.ttf"
+    }
+  },
+  {
+    "id": "merriweather",
+    "label": "Merriweather",
+    "familyName": "Merriweather",
+    "italicSupported": true,
+    "files": {
+      "regular": "Merriweather_regular.ttf",
+      "bold": "Merriweather_bold.ttf",
+      "italic": "Merriweather_italic.ttf",
+      "boldItalic": "Merriweather_boldItalic.ttf"
+    }
+  }
+]

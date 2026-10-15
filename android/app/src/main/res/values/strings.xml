@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Figma</string>
+    <string name="title_activity_main">Figma</string>
+    <string name="package_name">com.figma.reader.web</string>
+    <string name="custom_url_scheme">com.figma.reader.web</string>
+</resources>
