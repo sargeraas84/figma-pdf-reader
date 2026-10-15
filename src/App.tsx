@@ -17,8 +17,9 @@ import EmptyState from "./components/EmptyState";
 import PasswordModal from "./components/PasswordModal";
 import OcrModal from "./components/OcrModal";
 import ToolsPanel, { type ToolId } from "./components/ToolsPanel";
-import { SplitModal, ExportImagesModal } from "./components/ExportModals";
+import { SplitModal, ExportImagesModal, ExportDocModal } from "./components/ExportModals";
 import { pdfToWord } from "./lib/pdfToWord";
+import { exportPdfToTextFormat } from "./lib/exportText";
 import { pdfToPptx } from "./lib/pdfToPptx";
 import { exportPagesAsImages } from "./lib/exportImages";
 
@@ -135,6 +136,8 @@ export default function App() {
   const [splitModal, setSplitModal] = useState<{ name: string; numPages: number } | null>(null);
   // Export-as-images dialog state
   const [exportImages, setExportImages] = useState<{ name: string; numPages: number } | null>(null);
+  // Export-document-format dialog state (PDF → docx/txt/md/html)
+  const [exportDocModal, setExportDocModal] = useState<{ name: string; typeId: "pdf-to-word" } | null>(null);
   const tabsRef = useRef<Tab[]>([]);
   tabsRef.current = tabs;
   const activeIdRef = useRef<string | null>(null);
@@ -678,7 +681,7 @@ export default function App() {
     toast("Form template created — type into the boxes with Edit text");
   }, [openBufferTab, toast]);
 
-  /* ---------------- Word ⇄ PDF conversion ---------------- */
+  /* ---------------- documents → PDF conversion ---------------- */
 
   const convertWordToPdf = useCallback(async () => {
     const picked = await window.readerBridge.pickWordDoc();
@@ -688,34 +691,44 @@ export default function App() {
       const bytes = new Uint8Array(picked.buf as ArrayBuffer);
       const res = await window.readerBridge.wordToPdf(bytes);
       if (!res.ok || !res.bytes) throw new Error(res.error || "Conversion failed");
-      const name = picked.name.replace(/\.docx?$/i, "") + ".pdf";
+      const name = picked.name.replace(/\.(docx?|txt|md|markdown|html?|csv|rtf)$/i, "") + ".pdf";
       await openBufferTab(name, null, res.bytes, "word-to-pdf");
       toast(`Converted in ${((res.ms ?? 0) / 1000).toFixed(1)}s — review and Save`);
     } catch (err) {
       console.error(err);
-      toast(`Word to PDF failed: ${(err as Error).message}`);
+      toast(`Document to PDF failed: ${(err as Error).message}`);
     }
   }, [openBufferTab, toast]);
 
-  const convertPdfToWord = useCallback(async () => {
+  const convertPdfToWord = useCallback(async (format: "docx" | "txt" | "md" | "html" = "docx") => {
     const tab = active;
     if (!tab || tab.status !== "ready" || !tab.pdf) {
       toast("Open a PDF first");
       return;
     }
-    toast("Converting to Word…");
+    const fmtLabel = format === "docx" ? "Word" : format.toUpperCase();
+    toast(`Converting to ${fmtLabel}…`);
     try {
-      const res = await pdfToWord(tab.pdf);
-      const name = tab.name.replace(/\.pdf$/i, "") + ".docx";
-      const path = await window.readerBridge.savePdfDialog(name);
+      const base = tab.name.replace(/\.pdf$/i, "");
+      let blob: Blob;
+      let note: string;
+      if (format === "docx") {
+        const res = await pdfToWord(tab.pdf);
+        blob = res.blob;
+        note = `${paragraphsLabel(res.paragraphs)} from ${res.pageCount} page${res.pageCount === 1 ? "" : "s"}`;
+      } else {
+        blob = await exportPdfToTextFormat(tab.pdf, format);
+        note = `${tab.numPages} page${tab.numPages === 1 ? "" : "s"}`;
+      }
+      const path = await window.readerBridge.savePdfDialog(`${base}.${format}`);
       if (!path) return;
-      const buf = new Uint8Array(await res.blob.arrayBuffer());
+      const buf = new Uint8Array(await blob.arrayBuffer());
       const writeRes = await window.readerBridge.writePdfFile(path, buf);
       if (!writeRes.ok) throw new Error(writeRes.error || "Write failed");
-      toast(`Saved Word document: ${paragraphsLabel(res.paragraphs)} from ${res.pageCount} page${res.pageCount === 1 ? "" : "s"}`);
+      toast(`Saved ${fmtLabel} document: ${note}`);
     } catch (err) {
       console.error(err);
-      toast(`PDF to Word failed: ${(err as Error).message}`);
+      toast(`PDF to ${fmtLabel} failed: ${(err as Error).message}`);
     }
   }, [active, toast]);
 
@@ -867,9 +880,9 @@ export default function App() {
         case "word-to-pdf":
           void convertWordToPdf();
           break;
-        // PDF → Word: extract text from the open PDF into a .docx
+        // PDF → Word/text formats: extract text from the open PDF
         case "pdf-to-word":
-          void convertPdfToWord();
+          setExportDocModal({ name: active.name, typeId: "pdf-to-word" });
           break;
         // PDF → PowerPoint: each page becomes a slide (image + notes)
         case "pdf-to-pptx":
@@ -1246,6 +1259,16 @@ export default function App() {
                   numPages={exportImages.numPages}
                   onExport={(o) => void doExportImages(o)}
                   onClose={() => setExportImages(null)}
+                />
+              )}
+              {exportDocModal && (
+                <ExportDocModal
+                  name={exportDocModal.name}
+                  onExport={(format) => {
+                    setExportDocModal(null);
+                    void convertPdfToWord(format);
+                  }}
+                  onClose={() => setExportDocModal(null)}
                 />
               )}
             </div>

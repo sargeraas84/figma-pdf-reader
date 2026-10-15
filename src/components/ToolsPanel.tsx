@@ -61,8 +61,8 @@ const TOOLS: ToolDef[] = [
   { id: "redact", label: "Redact a PDF", icon: <Eraser size={20} />, accent: "text-pink-700", live: true },
   { id: "compress", label: "Compress a PDF", icon: <FileArchive size={20} />, accent: "text-orange-600", live: true },
   { id: "prepare-form", label: "Prepare a form", icon: <ClipboardCheck size={20} />, accent: "text-cyan-700", live: true },
-  { id: "word-to-pdf", label: "Word to PDF", icon: <FileCode size={20} />, accent: "text-blue-800", live: true },
-  { id: "pdf-to-word", label: "PDF to Word", icon: <FileType2 size={20} />, accent: "text-indigo-800", live: true },
+  { id: "word-to-pdf", label: "Documents to PDF", icon: <FileCode size={20} />, accent: "text-blue-800", live: true },
+  { id: "pdf-to-word", label: "Export as document…", icon: <FileType2 size={20} />, accent: "text-indigo-800", live: true },
   { id: "pdf-to-pptx", label: "PDF to PowerPoint", icon: <Presentation size={20} />, accent: "text-orange-700", live: true },
   { id: "export-images", label: "Export pages as images", icon: <FileImage size={20} />, accent: "text-teal-700", live: true },
   { id: "split", label: "Split a PDF", icon: <Scissors size={20} />, accent: "text-rose-700", live: true },
@@ -118,7 +118,7 @@ export default function ToolsPanel({
           </ul>
         </div>
         <div className="border-t border-zinc-200 px-5 py-2 text-[11px] text-zinc-400">
-          Live tools run in-app. Word ⇄ PDF converts documents without leaving the app.
+          Live tools run in-app. Documents ⇄ PDF supports Word, text, Markdown, HTML, CSV and RTF.
         </div>
       </div>
     </div>

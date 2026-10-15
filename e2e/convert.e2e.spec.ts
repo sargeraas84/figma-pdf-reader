@@ -65,9 +65,11 @@ test("PDF to Word: open pdf exports a .docx with extracted text", async () => {
   try {
     const win = await app.firstWindow();
     await win.waitForSelector(".textLayer span", { timeout: 90_000 });
-
     await win.getByRole("button", { name: "All tools" }).click();
     await win.getByRole("dialog", { name: "All tools" }).locator('[data-tool="pdf-to-word"]').click();
+    // the format chooser opens; Word (.docx) is the default selection
+    await win.getByRole("dialog", { name: "Export the PDF as" }).waitFor({ timeout: 10_000 });
+    await win.getByTestId("doc-format-go").click();
 
     await expect(win.getByText(/Saved Word document/)).toBeVisible({ timeout: 60_000 });
 

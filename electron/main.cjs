@@ -18,6 +18,7 @@ let win = null;
 let isQuitting = false;
 let mainMenu;
 let lastSaveTarget = null;
+let lastPickedName = null; // for word:pick → word:to-pdf source-type inference
 let pendingPdf = null;
 
 function sendMenuAction(action, payload) {
@@ -297,21 +298,29 @@ ipcMain.handle("file:read", (_e, filePath) => {
 
 /* ---------------- Word ⇄ PDF conversion ---------------- */
 
-// Pick a .docx / .doc file for Word → PDF (returns {path,name,buf} or null)
+// Pick a document to convert → PDF: Word, text, markdown, HTML, CSV or RTF
 ipcMain.handle("word:pick", async () => {
   const res = await dialog.showOpenDialog(win, {
-    title: "Convert Word to PDF",
+    title: "Convert document to PDF",
     properties: ["openFile"],
     filters: [
-      { name: "Word Document", extensions: ["docx", "doc"] },
+      { name: "Documents", extensions: ["docx", "doc", "txt", "md", "markdown", "html", "htm", "csv", "rtf"] },
+      { name: "Word", extensions: ["docx", "doc"] },
+      { name: "Text", extensions: ["txt"] },
+      { name: "Markdown", extensions: ["md", "markdown"] },
+      { name: "HTML", extensions: ["html", "htm"] },
+      { name: "CSV", extensions: ["csv"] },
+      { name: "RTF", extensions: ["rtf"] },
       { name: "All Files", extensions: ["*"] }
     ]
   });
   if (res.canceled || !res.filePaths.length) return null;
-  return readPdfFile(res.filePaths[0]);
+  const picked = readPdfFile(res.filePaths[0]);
+  lastPickedName = picked.name;
+  return picked;
 });
 
-// Word → PDF pipeline: a hidden Chromium window renders the .docx with
+// Document → PDF pipeline: a hidden Chromium window renders the file with
 // docx-preview (bundled converter.html page) and Chromium's own print engine
 // prints the rendered DOM to a real PDF — good fidelity, no external binaries.
 let converterWin = null;
@@ -381,7 +390,16 @@ ipcMain.handle("word:to-pdf", async (_e, bytesIn) => {
     }
     await new Promise((resolve, reject) => {
       convResultResolve = (err) => (err ? reject(err) : resolve());
-      cw.webContents.send("conv-msg", { type: "convert", data: bytesIn });
+      // infer the source type from the picked file's extension (the renderer
+      // passes the original name through the tool flow)
+      const ext = path.extname(lastPickedName || "").toLowerCase();
+      const sourceType =
+        ext === ".docx" || ext === ".doc" ? "docx" :
+        ext === ".md" || ext === ".markdown" ? "md" :
+        ext === ".html" || ext === ".htm" ? "html" :
+        ext === ".csv" ? "csv" :
+        ext === ".rtf" ? "rtf" : "txt";
+      cw.webContents.send("conv-msg", { type: "convert", data: bytesIn, sourceType });
       setTimeout(() => {
         if (convResultResolve) {
           convResultResolve = null;
