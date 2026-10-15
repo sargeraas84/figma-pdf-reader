@@ -1,30 +1,371 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; img-src 'self' blob: data:; font-src 'self' data:"
-    />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-    <meta http-equiv="origin-trial" content="" />
-    <!-- PWA (web build / Android tablet install) -->
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <meta name="theme-color" content="#111318" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="icon" type="image/png" href="./icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
-    <title>Figma</title>
-    <script type="module" crossorigin src="./assets/main-Cnhu-1Xz.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/jszip.min-BewJIyds.js">
-    <link rel="stylesheet" crossorigin href="./assets/main-64TwDz3r.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Figma — PDF Reader reimagined</title>
+  <meta name="description" content="A full-featured PDF reader: view, search, edit, highlight, redact, convert Word/PDF/PPTX, annotate and split. Windows, macOS, Android tablet and web." />
+  <style>
+    :root {
+      --bg-0: #0b1020;
+      --bg-1: #111a2e;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.09);
+      --text: #e7ecf6;
+      --muted: #93a0b8;
+      --coral: #ff6b6b;
+      --orange: #ff8e53;
+      --sky: #38bdf8;
+      --indigo: #818cf8;
+      --grad: linear-gradient(135deg, #ff6b6b, #ff8e53);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-0);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.55;
+      overflow-x: hidden;
+    }
+    a { color: var(--sky); text-decoration: none; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* nav */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(11,16,32,0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { display: flex; align-items: center; gap: 18px; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+    .nav-logo img { width: 28px; height: 28px; border-radius: 7px; }
+    .nav-links { margin-left: auto; display: flex; gap: 20px; font-size: 14px; color: var(--muted); }
+    .nav-links a { color: var(--muted); transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--grad); color: #fff !important;
+      padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 14px;
+    }
+
+    /* hero */
+    header.hero { padding: 96px 0 72px; position: relative; overflow: hidden; }
+    .hero::before {
+      content: ""; position: absolute; inset: -40%;
+      background:
+        radial-gradient(42% 40% at 25% 30%, rgba(255,107,107,0.18), transparent 65%),
+        radial-gradient(40% 40% at 75% 25%, rgba(56,189,248,0.15), transparent 65%),
+        radial-gradient(44% 44% at 55% 85%, rgba(129,140,248,0.16), transparent 65%);
+      animation: drift 22s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+    @keyframes drift {
+      0% { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.15) rotate(6deg); }
+    }
+    .hero-inner { position: relative; text-align: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--muted); font-size: 13px; padding: 6px 14px; border-radius: 999px;
+    }
+    .hero h1 {
+      margin: 22px 0 14px;
+      font-size: clamp(40px, 7vw, 72px);
+      line-height: 1.05; font-weight: 800; letter-spacing: -0.03em;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(90deg, var(--coral), var(--orange) 45%, var(--indigo));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p.lede { color: var(--muted); font-size: clamp(16px, 2.2vw, 20px); max-width: 640px; margin: 0 auto 34px; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 13px 24px; border-radius: 12px; font-weight: 650; font-size: 15px;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--grad); color: #fff; box-shadow: 0 10px 28px rgba(255,142,83,0.25); }
+    .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary:hover { box-shadow: 0 16px 38px rgba(255,142,83,0.35); }
+    .btn svg { width: 18px; height: 18px; }
+
+    /* logo animation strip */
+    .logo-scene { margin-top: 64px; display: flex; justify-content: center; }
+    .logo-orbit { position: relative; width: 340px; height: 340px; }
+    .logo-orbit .ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+    .logo-orbit .ring.r2 { inset: 42px; border-style: dashed; animation: spin 26s linear infinite; }
+    .logo-orbit .ring.r3 { inset: 84px; animation: spin 38s linear infinite reverse; }
+    .logo-orbit .ring.r4 { inset: 126px; border-style: dotted; opacity: .7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .logo-core {
+      position: absolute; inset: 0; display: grid; place-items: center;
+    }
+    .logo-core img {
+      width: 128px; height: 128px; border-radius: 30px;
+      animation: float 5s ease-in-out infinite, glow 5s ease-in-out infinite;
+      box-shadow: 0 24px 70px rgba(255,107,107,0.35);
+    }
+    @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 24px 70px rgba(255,107,107,0.30); }
+      50% { box-shadow: 0 34px 90px rgba(56,189,248,0.30); }
+    }
+    .orbit-dot {
+      position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; border-radius: 50%;
+    }
+    .orbit-dot.d1 { background: var(--coral); animation: orbit1 9s linear infinite; }
+    .orbit-dot.d2 { background: var(--sky); animation: orbit2 13s linear infinite; }
+    .orbit-dot.d3 { background: var(--indigo); animation: orbit3 17s linear infinite; }
+    @keyframes orbit1 {
+      from { transform: rotate(0deg) translateX(170px) rotate(0deg); }
+      to { transform: rotate(360deg) translateX(170px) rotate(-360deg); }
+    }
+    @keyframes orbit2 {
+      from { transform: rotate(120deg) translateX(128px) rotate(-120deg); }
+      to { transform: rotate(480deg) translateX(128px) rotate(-480deg); }
+    }
+    @keyframes orbit3 {
+      from { transform: rotate(240deg) translateX(86px) rotate(-240deg); }
+      to { transform: rotate(600deg) translateX(86px) rotate(-600deg); }
+    }
+
+    /* app screenshot strip */
+    .strip { margin: 20px auto 0; max-width: 900px; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; background: var(--bg-1); box-shadow: 0 30px 80px rgba(0,0,0,0.45); }
+    .strip svg { display: block; width: 100%; height: auto; }
+
+    /* features */
+    section { padding: 76px 0; }
+    h2.sec { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 10px; }
+    p.sec-lede { color: var(--muted); max-width: 620px; margin-bottom: 40px; }
+    .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .feature {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+    .feature:hover { transform: translateY(-4px); border-color: rgba(255,142,83,0.4); }
+    .feature .fi {
+      width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+      font-size: 20px; margin-bottom: 14px;
+      background: linear-gradient(135deg, rgba(255,107,107,0.18), rgba(56,189,248,0.14));
+      border: 1px solid var(--border);
+    }
+    .feature h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .feature p { color: var(--muted); font-size: 14px; }
+
+    /* downloads */
+    .dl-table { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .dl-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 15px 20px; border-bottom: 1px solid var(--border);
+      background: var(--card);
+    }
+    .dl-row:last-child { border-bottom: 0; }
+    .dl-row:hover { background: rgba(255,255,255,0.06); }
+    .dl-os { width: 92px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .dl-meta { flex: 1; min-width: 0; }
+    .dl-meta .name { font-size: 14px; font-weight: 600; }
+    .dl-meta .sub { color: var(--muted); font-size: 12.5px; }
+    .dl-links { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .dl-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 600;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text);
+      transition: background .18s, border-color .18s;
+    }
+    .dl-btn:hover { background: rgba(255,255,255,0.10); border-color: rgba(56,189,248,0.5); }
+    .dl-btn.hl { background: var(--grad); border: 0; color: #fff; }
+    .ver-tag {
+      display: inline-block; padding: 2px 9px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--card);
+      font-size: 11.5px; color: var(--muted); font-weight: 600;
+    }
+    .dl-note { color: var(--muted); font-size: 13px; margin-top: 14px; }
+
+    /* footer */
+    footer { border-top: 1px solid var(--border); padding: 30px 0 44px; color: var(--muted); font-size: 13.5px; }
+    footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    footer a { color: var(--muted); } footer a:hover { color: var(--text); }
+
+    /* reveal-on-scroll */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    @media (max-width: 720px) {
+      .nav-links { display: none; }
+      .hero { padding: 64px 0 48px; }
+      .logo-orbit { width: 260px; height: 260px; }
+      .logo-orbit .ring.r2 { inset: 32px; } .logo-orbit .ring.r3 { inset: 64px; } .logo-orbit .ring.r4 { inset: 96px; }
+      @keyframes orbit1 { from { transform: rotate(0) translateX(130px); } to { transform: rotate(360deg) translateX(130px);} }
+      @keyframes orbit2 { from { transform: rotate(120deg) translateX(98px); } to { transform: rotate(480deg) translateX(98px);} }
+      @keyframes orbit3 { from { transform: rotate(240deg) translateX(66px); } to { transform: rotate(600deg) translateX(66px);} }
+      .dl-row { flex-wrap: wrap; }
+      .dl-meta { order: 3; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <a class="nav-logo" href="#top">
+      <img src="./icons/icon-192.png" alt="Figma logo" />
+      Figma
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#design">Design</a>
+      <a href="#downloads">Downloads</a>
+      <a class="nav-cta" href="./app/">Open web app</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-inner">
+    <span class="hero-badge">✦ v1.1.0 — free &amp; fully local</span>
+    <h1>The PDF reader that<br /><span class="grad">does everything</span></h1>
+    <p class="lede">View, search, edit text, highlight, redact, draw, convert Word ⇄ PDF, export PowerPoint and images, split and merge — every tool running locally, no account, no uploads.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#downloads">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
+        Download
+      </a>
+      <a class="btn btn-secondary" href="./app/">Open the web app →</a>
+    </div>
+
+    <div class="logo-scene">
+      <div class="logo-orbit">
+        <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="ring r4"></div>
+        <span class="orbit-dot d1"></span><span class="orbit-dot d2"></span><span class="orbit-dot d3"></span>
+        <div class="logo-core"><img src="./icons/icon-512.png" alt="Figma app logo" /></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="features">
+    <div class="wrap">
+      <h2 class="sec reveal">Everything in one box</h2>
+      <p class="sec-lede reveal">Fourteen live tools, all engineered to work offline. Nothing you open ever leaves your device.</p>
+      <div class="grid">
+        <div class="feature reveal"><div class="fi">📄</div><h3>Read comfortably</h3><p>Tabbed documents, continuous scroll, full-text search, fit modes, rotation and night mode — fast on 2&nbsp;000-page files.</p></div>
+        <div class="feature reveal"><div class="fi">✏️</div><h3>Edit the text</h3><p>Click any text run and retype it. Bundled open-licensed fonts (Roboto, Lato, Inter, Merriweather…) are embedded subset into your saved PDF.</p></div>
+        <div class="feature reveal"><div class="fi">🖍️</div><h3>Annotate</h3><p>Highlight whole lines or selections, draw freehand with the pen, and manage everything from the annotations sidebar — all baked in on save.</p></div>
+        <div class="feature reveal"><div class="fi">🔒</div><h3>Redact &amp; protect</h3><p>Drag real black-out boxes that strip the covered text, and set an open password (AES-256) on any document.</p></div>
+        <div class="feature reveal"><div class="fi">🔄</div><h3>Convert</h3><p>Word → PDF, PDF → Word, PDF → PowerPoint with speaker notes, and pages → PNG/JPG images. Two-way, local, no uploads.</p></div>
+        <div class="feature reveal"><div class="fi">🗂️</div><h3>Organize</h3><p>Drag pages to reorder them, split a range into a new file, merge several PDFs into one, compress losslessly, run OCR on scans.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="design">
+    <div class="wrap">
+      <h2 class="sec reveal">Built for the way you read</h2>
+      <p class="sec-lede reveal">A dark, focused shell that keeps the page front and center — on desktop, in the browser, and touch-tuned for Android tablets.</p>
+      <div class="grid">
+        <div class="feature reveal"><div class="fi">🌙</div><h3>Night mode</h3><p>One keystroke inverts the page content while keeping the UI dark — easy on the eyes at 2&nbsp;a.m.</p></div>
+        <div class="feature reveal"><div class="fi">⌨️</div><h3>Keyboard first</h3><p>Native menus and accelerators for open, save, find, zoom, fit modes and more.</p></div>
+        <div class="feature reveal"><div class="fi">📱</div><h3>Tablet ready</h3><p>Installable PWA plus a sideloadable APK: bigger touch targets, no hover dependency, works offline.</p></div>
+        <div class="feature reveal"><div class="fi">🔒</div><h3>Private by design</h3><p>No account, no telemetry, no network calls for the core flows. Your documents stay yours.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="downloads">
+    <div class="wrap">
+      <h2 class="sec reveal">Download v1.1.0 <span class="ver-tag">all builds</span></h2>
+      <p class="sec-lede reveal">Pick your platform. Every download is served free, straight from this repository's releases.</p>
+
+      <div class="dl-table reveal">
+        <!-- repeated op: build this table by hand per asset naming below -->
+        <div class="dl-row">
+          <div class="dl-os">🖥️ Windows</div>
+          <div class="dl-meta"><div class="name">Installer (NSIS, one-click)</div><div class="sub">Recommended · Windows 10/11 · ~131 MB</div></div>
+          <div class="dl-links">
+            <a class="dl-btn hl" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-Setup-1.1.0-x64.exe">x64 ↓</a>
+            <a class="dl-btn" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-Setup-1.1.0-arm64.exe">ARM64 ↓</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div class="dl-os">💾 Windows</div>
+          <div class="dl-meta"><div class="name">Portable (no install)</div><div class="sub">Run from anywhere · ~131 MB</div></div>
+          <div class="dl-links">
+            <a class="dl-btn hl" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-Portable-1.1.0-x64.exe">x64 ↓</a>
+            <a class="dl-btn" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-Portable-1.1.0-arm64.exe">ARM64 ↓</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div class="dl-os">🍎 macOS</div>
+          <div class="dl-meta"><div class="name">Disk image (DMG)</div><div class="sub">Drag to Applications · ~174–178 MB</div></div>
+          <div class="dl-links">
+            <a class="dl-btn hl" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-1.1.0-x64.dmg">Intel ↓</a>
+            <a class="dl-btn" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-1.1.0-arm64.dmg">Apple Silicon ↓</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div class="dl-os">📦 macOS</div>
+          <div class="dl-meta"><div class="name">App bundle (zip)</div><div class="sub">Unzip and run · ~173–178 MB</div></div>
+          <div class="dl-links">
+            <a class="dl-btn" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-1.1.0-x64.zip">Intel ↓</a>
+            <a class="dl-btn" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-1.1.0-arm64.zip">Apple Silicon ↓</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div class="dl-os">📱 Android</div>
+          <div class="dl-meta"><div class="name">Tablet app (APK)</div><div class="sub">Sideload · Android 7.0+ · 7.6 MB</div></div>
+          <div class="dl-links">
+            <a class="dl-btn hl" href="https://github.com/sargeraas84/figma-pdf-reader/releases/download/v1.1.0/Figma-web-1.1.0-debug.apk">APK ↓</a>
+            <a class="dl-btn" href="./app/">or PWA ↗</a>
+          </div>
+        </div>
+        <div class="dl-row">
+          <div class="dl-os">🌐 Any device</div>
+          <div class="dl-meta"><div class="name">Web app (no install)</div><div class="sub">Runs in the browser · offline-capable</div></div>
+          <div class="dl-links">
+            <a class="dl-btn hl" href="./app/">Open web app →</a>
+          </div>
+        </div>
+      </div>
+
+      <p class="dl-note">Installers are unsigned — expect one SmartScreen / Gatekeeper prompt on first open (macOS: right-click → Open). The APK is debug-signed: enable “install unknown apps” to sideload. Changelog and older versions on the <a href="https://github.com/sargeraas84/figma-pdf-reader/releases">Releases page</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Figma PDF Reader — not affiliated with any commercial product.</span>
+    <span><a href="https://github.com/sargeraas84/figma-pdf-reader">Source</a> · <a href="https://github.com/sargeraas84/figma-pdf-reader/releases">Releases</a> · <a href="./app/">Web app</a></span>
+  </div>
+</footer>
+
+<script>
+  // reveal-on-scroll
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+  // parallax drift on the orbit dots (subtle input response)
+  const scene = document.querySelector(".logo-orbit");
+  if (scene && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.addEventListener("mousemove", (ev) => {
+      const r = scene.getBoundingClientRect();
+      const dx = ((ev.clientX - (r.left + r.width / 2)) / window.innerWidth) * 12;
+      const dy = ((ev.clientY - (r.top + r.height / 2)) / window.innerHeight) * 12;
+      scene.style.translate = `${dx}px ${dy}px`;
+    }, { passive: true });
+  }
+</script>
+</body>
 </html>
